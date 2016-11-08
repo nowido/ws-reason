@@ -5,6 +5,12 @@ function logInfo(info)
 }
 //----------------------------------------------------------------------------- 
 
+function onFolderCreate(context)
+{
+    logInfo(JSON.stringify(context.message.yadTransaction));
+    context.commander.closeReason(context.message.reason);
+}
+
 function onYadFileDone(context)
 {
     logInfo(JSON.stringify(context.message.yadTransaction));
@@ -55,8 +61,11 @@ $(document).ready(function(){
         
         //var jsonStr = JSON.stringify({a: [1, 2, 33], b: 'Hello, World!'});
         
-        //commander.issueCommand('YAD_WRITE_FILE', ['3.json', false, jsonStr], onYadFileDone);
-        commander.issueCommand('YAD_READ_FILE', ['2.txt', false], onYadFileDone);
+        //commander.issueCommand('YAD_WRITE_FILE', ['2.txt', false, 'Hello, World! 2'], onYadFileDone);
+        //commander.issueCommand('YAD_READ_FILE', ['2.txt', false], onYadFileDone);
+        //commander.issueCommand('YAD_CREATE_FOLDER', ['2'], onFolderCreate);
+        //commander.issueCommand('YAD_MOVE_ELEMENT', ['2/3.txt', '2.txt'], onFolderCreate);
+        commander.issueCommand('YAD_LIST_ELEMENTS', ['', ['_embedded.items.name', '_embedded.total'], 40, 0], onFolderCreate);
     });
     
     socket.on('disconnect', function(reason){
