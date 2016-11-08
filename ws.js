@@ -113,12 +113,16 @@ const errUnknownCommand = 'Unknown command: ';
 var commandsRegistry = 
 {
     'YAD_READ_FILE' : yadReadFile,
-    'YAD_WRITE_FILE' : yadWriteFile
+    'YAD_WRITE_FILE' : yadWriteFile,
+    'YAD_CREATE_FOLDER' : yadCreateFolder,
+    'YAD_DELETE_ELEMENT' : yadDeleteElement,
+    'YAD_MOVE_ELEMENT' : yadMoveElement,
+    'YAD_LIST_ELEMENTS' : yadListElements
 };
 
 function yadReadFile(args, reason, socketToAnswer)
 {
-        // path, asBinaryContent
+        // args: path, asBinaryContent
     yd.readFile(args[0], args[1], function(err, response){
         
         socketToAnswer.emit(channel, {reason: reason, yadTransaction: {error: err, response: response}});
@@ -127,8 +131,44 @@ function yadReadFile(args, reason, socketToAnswer)
 
 function yadWriteFile(args, reason, socketToAnswer)
 {
-        // path, asBinaryContent, content
+        // args: path, asBinaryContent, content
     yd.writeFile(args[0], args[1], args[2], function(err, response){
+        
+        socketToAnswer.emit(channel, {reason: reason, yadTransaction: {error: err, response: response}});
+    });
+}
+
+function yadCreateFolder(args, reason, socketToAnswer)
+{
+        // args: path
+    yd.createFolder(args[0], function(err, response){
+        
+        socketToAnswer.emit(channel, {reason: reason, yadTransaction: {error: err, response: response}});
+    });
+}
+
+function yadDeleteElement(args, reason, socketToAnswer)
+{
+        // args: path
+    yd.deleteElement(args[0], function(err, response){
+        
+        socketToAnswer.emit(channel, {reason: reason, yadTransaction: {error: err, response: response}});
+    });
+}
+
+function yadMoveElement(args, reason, socketToAnswer)
+{
+        // args: pathFrom, pathTo
+    yd.moveElement(args[0], args[1], function(err, response){
+        
+        socketToAnswer.emit(channel, {reason: reason, yadTransaction: {error: err, response: response}});
+    });
+}
+
+function yadListElements(args, reason, socketToAnswer)
+{
+        // args: path, fields array, limit, offset
+    yd.listElements(args[0], args[1], args[2], args[3], function(err, response){
         
         socketToAnswer.emit(channel, {reason: reason, yadTransaction: {error: err, response: response}});
     });
