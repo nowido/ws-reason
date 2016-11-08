@@ -62,8 +62,8 @@ YadClient.prototype.writeFile = function(path, asBinaryContent, content, callbac
 
 YadClient.prototype.readFile = function(path, asBinaryContent, callback)
 {
-    var reqUrl = this.yadHost + '/v1/disk/resources/download/?path=app:/' + path;    
-    
+    var reqUrl = this.yadHost + '/v1/disk/resources/download/?path=app:/' + path;     
+        
     this.reqHelper('GET', reqUrl, this.yadApiHeaders, null, function(err, reply){
         
         if(err)
@@ -93,6 +93,53 @@ YadClient.prototype.readFile = function(path, asBinaryContent, callback)
 
 //-----------------------------------------------------------------------------
 
+YadClient.prototype.createFolder = function(path, callback)
+{
+    var reqUrl = this.yadHost + '/v1/disk/resources/?path=app:/' + path;    
+
+    this.reqHelper('PUT', reqUrl, this.yadApiHeaders, null, callback);
+}
+
+//-----------------------------------------------------------------------------
+
+YadClient.prototype.deleteElement = function(path, callback)
+{
+    var reqUrl = this.yadHost + '/v1/disk/resources/?path=app:/' + path + '&permanently=true';    
+
+    this.reqHelper('DELETE', reqUrl, this.yadApiHeaders, null, callback);
+}
+
+//-----------------------------------------------------------------------------
+
+YadClient.prototype.moveElement = function(pathFrom, pathTo, callback)
+{
+    var reqUrl = this.yadHost + '/v1/disk/resources/move/?from=app:/' + pathFrom + '&path=app:/' + pathTo;
+    
+    this.reqHelper('POST', reqUrl, this.yadApiHeaders, null, callback);
+}
+
+//-----------------------------------------------------------------------------
+
+YadClient.prototype.listElements = function(path, fields, limit, offset, callback)
+{
+    var fieldsStr = '&fields=';
+    
+    var lastFieldIndex = fields.length - 1;
+    
+    for(var i = 0; i < lastFieldIndex; ++i)
+    {
+        fieldsStr += fields[i] + ',';
+    }
+    
+    fieldsStr += fields[lastFieldIndex];
+    
+    var reqUrl = this.yadHost + '/v1/disk/resources/?path=app:/' + path + fieldsStr + '&limit=' + limit + '&offset=' + offset;    
+    
+    this.reqHelper('GET', reqUrl, this.yadApiHeaders, null, callback);
+}
+
+//-----------------------------------------------------------------------------
+
 YadClient.prototype.reqHelper = function(method, reqUrl, headers, content, callback)
 {
     var parsedUrl = url.parse(reqUrl);
@@ -103,7 +150,7 @@ YadClient.prototype.reqHelper = function(method, reqUrl, headers, content, callb
         method: method,
         headers: headers
     });
-    
+
     req.once('error', function(e){
         callback(e, null);
     });
@@ -197,6 +244,8 @@ YadClient.prototype.reqHelperUploadDownload = function(method, reqUrl, asBinaryC
     
     if(content)
     {
+            // to do: workaround 'drain' for writing (upload content may be huge)
+        
         if(asBinaryContent)
         {
             var binBuffer = base64.base64ToBin(content);
