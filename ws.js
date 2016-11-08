@@ -196,7 +196,7 @@ function executeCommand(command, args, reason, socketToAnswer)
 
 function onMessage(message)
 {
-    console.log('message from ' + this.socket.id);
+    //console.log('message from ' + this.socket.id);
 
     if(message.command)
     {
@@ -206,7 +206,7 @@ function onMessage(message)
 
 function onDisconnect(reason)
 {
-    console.log('disconnect ' + this.socket.id + ' by reason: ' + reason);
+    //console.log('disconnect ' + this.socket.id + ' by reason: ' + reason);
     
     delete connectedClients[this.socket.id];
 }
@@ -217,7 +217,7 @@ function onConnect(socket)
 
     connectedClients[socket.id] = entry;
     
-    console.log('connect ' + socket.id);
+    //console.log('connect ' + socket.id);
     
     socket.on('disconnect', onDisconnect.bind(entry));
     
