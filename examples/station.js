@@ -30,10 +30,11 @@ function retrieveFullCollection(token, commander, nextProc)
             
             for(var j = 0; j < recordsCount; ++j)
             {
-                collection[lowIndex + j] = content[j];
+                collection[lowIndex + j] = JSON.parse('[' +content[j] + ']');
             }
         }
         
+            // array of arrays
         return collection;
     }
     
@@ -66,7 +67,7 @@ function retrieveFullCollection(token, commander, nextProc)
                 
                 collection = gatherCollection();
                 
-                logInfo(collection.length + ' records parsed');
+                logInfo(collection.length + ' records parsed (' + collection[0].length + ' fields each)');
             }
             else
             {
