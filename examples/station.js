@@ -43,8 +43,6 @@ function retrieveFullCollection(token, commander, nextProc)
     
     function registerChunk(context)
     {
-        context.commander.closeReason(context.message.reason);
-        
         if(context.message.yadTransaction && !context.message.yadTransaction.error)
         {
             ++chunksRegistry.downloaded;
@@ -85,8 +83,6 @@ function retrieveFullCollection(token, commander, nextProc)
     
     function processItemsList(context)
     {
-        context.commander.closeReason(context.message.reason);
-        
         if(context.message.yadTransaction && !context.message.yadTransaction.error)
         {
             var responseObject = JSON.parse(context.message.yadTransaction.response);
@@ -1694,8 +1690,6 @@ function onWorkerMessage(e)
         
         this.commander.issueCommand('YAD_WRITE_FILE', [path, false, modelStr], function(ctx){
             
-            ctx.commander.closeReason(ctx.message.reason);
-            
             if(ctx.message.yadTransaction && !ctx.message.yadTransaction.error)
             {
                 logInfo('Possibly stored: ' + path);
@@ -1715,9 +1709,9 @@ function main(commander)
         
     var parametersBlock = 
     {
-        trainToken : 'int_train',
-        testToken : 'int_test',
-        targetToken: 'int',
+        trainToken : 'int_train',   // data/<trainToken>
+        testToken : 'int_test',     // data/<testToken>
+        targetToken: 'int',         // models/<targetToken>
         clusterizationRadius : 2.2,
         qFactor : 4,
         yAmplitude : 2,
