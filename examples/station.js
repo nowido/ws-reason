@@ -1,7 +1,14 @@
 //-----------------------------------------------------------------------------
 function logInfo(info)
 {
-    $('<p>' + info + '</p>').appendTo(document.body);
+    $('#info').append('<p>' + info + '</p>');
+
+    var h = $('#info').height();
+    //var rh = $('#rootContainer').height();
+
+    //$('#rootContainer').scrollTop((h - rh) + rh / 2);
+    
+    $('#rootContainer').scrollTop(h);
 }
 //-----------------------------------------------------------------------------
 function retrieveFullCollection(token, commander, nextProc)
@@ -1760,6 +1767,10 @@ function main(commander)
 //-----------------------------------------------------------------------------
 $(document).ready(function(){
     
+    $(document.body).append('<div id="rootContainer"></div>');
+    $('#rootContainer').css({'overflow' : 'auto', 'height': '100%'});
+    $('#rootContainer').append('<div id="info"></div>');
+
     var socket = io.connect();        
     
     var commander = new AsyncCommander(socket, 'message');
