@@ -4,10 +4,6 @@ function logInfo(info)
     $('#info').append('<p>' + info + '</p>');
 
     var h = $('#info').height();
-    //var rh = $('#rootContainer').height();
-
-    //$('#rootContainer').scrollTop((h - rh) + rh / 2);
-    
     $('#rootContainer').scrollTop(h);
 }
 //-----------------------------------------------------------------------------
