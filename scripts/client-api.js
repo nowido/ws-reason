@@ -63,17 +63,14 @@ AsyncCommander.prototype.hold = function(message, socket)
         
         actionEntry.proc(actionEntry.context);
         
+        delete this.actions[message.reason];
+        
         return true;
     }
     else
     {
         return false;
     }
-}
-
-AsyncCommander.prototype.closeReason = function(reason)
-{
-    delete this.actions[reason];
 }
 //----------------------------------------------------------------------------- 
 function binToBase64(buffer)
