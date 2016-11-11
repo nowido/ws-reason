@@ -342,10 +342,23 @@ function testEnsemble(collection, models)
     var ySeparatorAverage = 0;
     
         // evaluate every model and sum their output
+    
+    var bestModelErr = 1;
+    
+    var bestModelErr0 = 1;
+    var bestModelErr1 = 1;
         
     for(var i = 0; i < models.length; ++i)
     {
         var model = models[i];
+        
+        if(model.classifierError < bestModelErr)
+        {
+            bestModelErr = model.classifierError;
+            
+            bestModelErr0 = model.classifierError0;
+            bestModelErr1 = model.classifierError1;
+        }
         
         ySeparatorAverage += model.ySeparator;
         
@@ -479,8 +492,23 @@ function testEnsemble(collection, models)
     var err = (err0 + err1) / recordsCount;    
     var votesErr = (votesErr0 + votesErr1) / recordsCount;
     
-    logInfo('Ensemble test: err0 = ' + err0 + ', err1 = ' + err1 + ', total classifier error ' + err * 100 + '%');
-    logInfo('votes err0 = ' + votesErr0 + ', err1 = ' + votesErr1 + ', total votes classifier error ' + votesErr * 100 + '%');
+    const decimalPlaces = 6;
+    
+    logInfo('Ensemble test: err0 = ' + 
+                decimalRound(err0/recordsCount, decimalPlaces) * 100 + 
+                '%, err1 = ' + decimalRound(err1/recordsCount, decimalPlaces) * 100 + 
+                '%, total classifier error ' + decimalRound(err, decimalPlaces) * 100  + '%');
+                
+    logInfo('votes err0 = ' + 
+                decimalRound(votesErr0/recordsCount, decimalPlaces) * 100 + 
+                '%, err1 = ' + decimalRound(votesErr1/recordsCount, decimalPlaces) * 100 + 
+                '%, total votes classifier error ' + decimalRound(votesErr, decimalPlaces) * 100 + '%');
+                
+    logInfo('Best model in ensemble: err0 = ' + 
+                decimalRound(bestModelErr0, decimalPlaces) * 100 + 
+                '%, err1 = ' + decimalRound(bestModelErr1, decimalPlaces) * 100 + 
+                '%, total classifier error ' + decimalRound(bestModelErr, decimalPlaces) * 100 + '%');
+                
     logInfo('Used ' + records0 + ' [y = 0] and ' + records1 + ' [y = 1] records');
 }
 //-----------------------------------------------------------------------------
@@ -491,10 +519,10 @@ function main(commander)
         
     var parametersBlock = 
     {
-        modelsToken : 'int',    // models/<modelsToken>
-        testToken : 'int_test', // data/<testToken>
-        targetToken: 'int',     // ensembles/<targetToken>
-        ensembleSize: 3
+        modelsToken : 'mean_ar',    // models/<modelsToken>
+        testToken : 'mean_test', // data/<testToken>
+        targetToken: 'mean',     // ensembles/<targetToken>
+        ensembleSize: 7
     };
     
         // read models folder, get list of items
