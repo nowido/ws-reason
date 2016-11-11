@@ -1,4 +1,6 @@
 //-----------------------------------------------------------------------------
+var lock = false;
+//-----------------------------------------------------------------------------
 function logInfo(info)
 {
     $('#info').append('<p>' + info + '</p>');
@@ -1411,7 +1413,7 @@ function initializeModel(taskContext, clusters)
     {
         trainToken: taskContext.structureParameters.trainToken,
         xDimension: yIndex,
-        rulesCount: taskContext.structureParameters.anfisRulesCount,
+        rulesCount: (taskContext.structureParameters.anfisRulesCount ? taskContext.structureParameters.anfisRulesCount : clusters.length),
         yAmplitude: taskContext.structureParameters.yAmplitude,
         ySeparator: taskContext.structureParameters.ySeparator,
         rangesMin: taskContext.trainData.rangesMin,
@@ -1426,6 +1428,8 @@ function initializeModel(taskContext, clusters)
     
     var parameters = model.parameters;
     
+    var initRandom = taskContext.structureParameters.initRandom;
+    
     for(var r = 0; r < model.rulesCount; ++r)
     {
         var cluster = clusters[r % clusters.length];
@@ -1433,7 +1437,7 @@ function initializeModel(taskContext, clusters)
             // a
         for(var col = 0; col < yIndex; ++col)
         {
-            parameters[parameterIndex] = cluster.center[col];
+            parameters[parameterIndex] = (initRandom ? Math.random() : cluster.center[col]);
             ++parameterIndex;                    
         }
             // q
@@ -1442,19 +1446,19 @@ function initializeModel(taskContext, clusters)
         
         for(var col = 0; col < yIndex; ++col)
         {
-            parameters[parameterIndex] = q;
+            parameters[parameterIndex] = (initRandom ? (-1 + 2 * Math.random()) * 0.1 + q : q);
             ++parameterIndex;                    
         }
             // b
         for(var col = 0; col < yIndex; ++col)
         {
-            parameters[parameterIndex] = 0;
+            parameters[parameterIndex] = (initRandom ? (-1 + 2 * Math.random()) : 0);
             ++parameterIndex;                    
         }
             // linear 0
             // y center for this cluster    
 
-        parameters[parameterIndex] =  cluster.center[yIndex];
+        parameters[parameterIndex] = (initRandom ? (-1 + 2 * Math.random()) : cluster.center[yIndex]);
         ++parameterIndex;
     }
     
@@ -1473,7 +1477,7 @@ function trainModel(taskContext)
         knownOutput: taskContext.trainData.knownOutput,
         lbfgsHistorySize: taskContext.structureParameters.lbfgsHistorySize,
         lbfgsSteps: taskContext.structureParameters.lbfgsSteps,
-        linearSearchStepsCount: 20,
+        linearSearchStepsCount: taskContext.structureParameters.linearSearchStepsCount,
         epsilon: 1e-8,
         reportSteps: 20
     });    
@@ -1591,6 +1595,11 @@ function onWorkerMessage(e)
         
         this.model = initializeModel(this, arg.clusters);
         
+        if(this.structureParameters.initRandom)
+        {
+            logInfo('Initializing with random parameters');
+        }
+        
         logInfo('Initialized ' + this.model.parameters.length + ' ANFIS parameters (' + this.model.rulesCount + ' rules, X dimension = ' + this.model.xDimension + ')');
         
         trainModel(this);
@@ -1605,23 +1614,30 @@ function onWorkerMessage(e)
             logInfo('{weird: ' + lbfgsStatus.weird + ', diverged: ' + lbfgsStatus.diverged + ', local: ' + lbfgsStatus.local + '}');
             logInfo('f optimized: ' + lbfgsStatus.error + ', f initial: ' + lbfgsStatus.initialError);
             
-            this.model.optimizedParameters = lbfgsStatus.optX;
-                
-                // now retrieve test data
-                
-            retrieveFullCollection(this.structureParameters.testToken, this.commander, function(collection){
-                
-                if(collection)
-                {
-                    logInfo('Test data: ' + collection.length + ' records parsed (' + collection[0].length + ' fields each)');    
+            if(lbfgsStatus.weird || lbfgsStatus.diverged || lbfgsStatus.local)
+            {
+                logInfo('Model seems to fail training with the specified parameters. Stopped');            
+            }
+            else
+            {
+                this.model.optimizedParameters = lbfgsStatus.optX;
                     
-                    this.testData = prepareTestData(collection, this.model);
+                    // now retrieve test data
                     
-                    logInfo('records [y = 0]: ' + this.testData.records0 + ', records [y = 1]: ' + this.testData.records1);
+                retrieveFullCollection(this.structureParameters.testToken, this.commander, function(collection){
                     
-                    testModel(this);
-                }        
-            }.bind(this));
+                    if(collection)
+                    {
+                        logInfo('Test data: ' + collection.length + ' records parsed (' + collection[0].length + ' fields each)');    
+                        
+                        this.testData = prepareTestData(collection, this.model);
+                        
+                        logInfo('records [y = 0]: ' + this.testData.records0 + ', records [y = 1]: ' + this.testData.records1);
+                        
+                        testModel(this);
+                    }        
+                }.bind(this));
+            }
         }
         else
         {
@@ -1709,15 +1725,17 @@ function main(commander)
         
     var parametersBlock = 
     {
-        trainToken : 'int_train',   // data/<trainToken>
-        testToken : 'int_test',     // data/<testToken>
-        targetToken: 'int',         // models/<targetToken>
+        trainToken : 'mean_train',       // data/<trainToken>
+        testToken : 'mean_test',         // data/<testToken>
+        targetToken: 'mean_ar',             // models/<targetToken>
+        initRandom: false,
         clusterizationRadius : 2.2,
-        qFactor : 4,
+        qFactor : 4.4,
         yAmplitude : 2,
         ySeparator : 0,
-        anfisRulesCount: 10,
+        //anfisRulesCount: 10,
         lbfgsHistorySize: 10,
+        lbfgsLinearSearchStepsCount: 20,
         lbfgsSteps: 1000
     };
 
@@ -1769,7 +1787,12 @@ $(document).ready(function(){
        
         logInfo('*connect'); 
         
-        main(commander);
+        if(!lock)
+        {
+            lock = true;
+            
+            main(commander);
+        }
     });
     
     socket.on('disconnect', function(reason){
