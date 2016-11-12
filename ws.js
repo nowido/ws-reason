@@ -114,6 +114,7 @@ var commandsRegistry =
 {
     'YAD_READ_FILE' : yadReadFile,
     'YAD_WRITE_FILE' : yadWriteFile,
+    'YAD_OVEWRITE_FILE' : yadOverwriteFile,
     'YAD_CREATE_FOLDER' : yadCreateFolder,
     'YAD_DELETE_ELEMENT' : yadDeleteElement,
     'YAD_MOVE_ELEMENT' : yadMoveElement,
@@ -133,6 +134,15 @@ function yadWriteFile(args, reason, socketToAnswer)
 {
         // args: path, asBinaryContent, content
     yd.writeFile(args[0], args[1], args[2], function(err, response){
+        
+        socketToAnswer.emit(channel, {reason: reason, yadTransaction: {error: err, response: response}});
+    });
+}
+
+function yadOverwriteFile(args, reason, socketToAnswer)
+{
+        // args: path, asBinaryContent, content
+    yd.overwriteFile(args[0], args[1], args[2], function(err, response){
         
         socketToAnswer.emit(channel, {reason: reason, yadTransaction: {error: err, response: response}});
     });
