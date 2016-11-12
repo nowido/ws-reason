@@ -1617,7 +1617,7 @@ function checkBest(taskContext)
                         }
                         else
                         {
-                            logInfo('No need to replace best model. Stopped.');
+                            logInfo('No need to replace best model');
                             logInfo('All done. Stopped.');
                         }
                     }
