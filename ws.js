@@ -18,13 +18,16 @@ var cachedFiles =
     {mode : binFileContent, path : './jquery/jquery.js.gz'},
     {mode : textFileContent, path : './jquery/jquery.js'},
     {mode : textFileContent, path : './pages/master-submit.html'},
-    {mode : textFileContent, path : './scripts/client-api.js'}
+    {mode : textFileContent, path : './scripts/client-api.js'},
+    
+    {mode : textFileContent, path : './examples/station.js'}
 ];
 
 const jqgzip = 0;
 const jqnogzip = 1;
 const mipage = 2;
 const cliapis = 3;
+const station = 4;
 
 //-----------------------------------------------------------------------------
 
@@ -59,9 +62,14 @@ const htmlEndSequence = '</script><body></body></html>';
 
 app.get('/', function(req, res){
     
-        // to do: inject slave station page with worker script
-    res.set(ctText);
-    res.send('Use /master');    
+    var pageContent = 
+        htmlStartSequence + '\n' +
+        cachedFiles[cliapis].content + '\n' +
+        cachedFiles[station].content + '\n' +
+        htmlEndSequence;
+    
+    res.set(ctHtml);
+    res.send(pageContent);    
 });
 
 app.get('/master', function(req, res){
