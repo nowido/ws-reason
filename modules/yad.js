@@ -60,6 +60,39 @@ YadClient.prototype.writeFile = function(path, asBinaryContent, content, callbac
 
 //-----------------------------------------------------------------------------
 
+YadClient.prototype.overwriteFile = function(path, asBinaryContent, content, callback)
+{
+    var reqUrl = this.yadHost + '/v1/disk/resources/upload/?path=app:/' + path + '&overwrite=true';
+    
+    this.reqHelper('GET', reqUrl, this.yadApiHeaders, content, function(err, reply){
+        
+        if(err)
+        {
+            callback(err, reply);
+        }
+        else
+        {
+            var replyObject = JSON.parse(reply);
+            
+            if(replyObject.error)
+            {
+                callback(err, reply); 
+            }
+            else
+            {
+                    // upload content to the specified URL
+                    
+                YadClient.prototype.reqHelperUploadDownload(replyObject.method, replyObject.href, asBinaryContent, content, function(err, reply){
+
+                    callback(err, reply);    
+                });
+            }
+        }
+    });   
+}
+
+//-----------------------------------------------------------------------------
+
 YadClient.prototype.readFile = function(path, asBinaryContent, callback)
 {
     var reqUrl = this.yadHost + '/v1/disk/resources/download/?path=app:/' + path;     
