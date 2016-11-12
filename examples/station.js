@@ -1477,7 +1477,7 @@ function trainModel(taskContext)
         knownOutput: taskContext.trainData.knownOutput,
         lbfgsHistorySize: taskContext.structureParameters.lbfgsHistorySize,
         lbfgsSteps: taskContext.structureParameters.lbfgsSteps,
-        linearSearchStepsCount: taskContext.structureParameters.linearSearchStepsCount,
+        linearSearchStepsCount: taskContext.structureParameters.lbfgsLinearSearchStepsCount,
         epsilon: 1e-8,
         reportSteps: 20
     });    
