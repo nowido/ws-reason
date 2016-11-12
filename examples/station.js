@@ -1685,7 +1685,7 @@ function onWorkerMessage(e)
             logInfo('{weird: ' + lbfgsStatus.weird + ', diverged: ' + lbfgsStatus.diverged + ', local: ' + lbfgsStatus.local + '}');
             logInfo('f optimized: ' + lbfgsStatus.error + ', f initial: ' + lbfgsStatus.initialError);
             
-            if(lbfgsStatus.weird || lbfgsStatus.diverged || lbfgsStatus.local)
+            if(lbfgsStatus.weird || lbfgsStatus.diverged)
             {
                 logInfo('Model seems to fail training with the specified parameters. Stopped');            
             }
