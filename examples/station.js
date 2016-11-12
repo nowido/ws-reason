@@ -1574,6 +1574,77 @@ function testModel(taskContext)
     });
 }
 //-----------------------------------------------------------------------------
+function checkBest(taskContext)
+{
+    var pathBest = 'best/' + taskContext.structureParameters.bestToken;
+    
+    taskContext.commander.issueCommand('YAD_LIST_ELEMENTS', [pathBest, ['_embedded.items.name', '_embedded.total', "name"], 1, 0], function(context){
+        
+        if(context.message.yadTransaction && !context.message.yadTransaction.error)
+        {
+            var responseObject = JSON.parse(context.message.yadTransaction.response);
+            
+            if(responseObject._embedded && (responseObject._embedded.total > 0))
+            {
+                var pathBestModel = pathBest + '/' + responseObject._embedded.items[0].name;
+                
+                context.commander.issueCommand('YAD_READ_FILE', [pathBestModel, false], function(ctx){
+
+                    if(ctx.message.yadTransaction && !ctx.message.yadTransaction.error)
+                    {
+                        var bestModel = JSON.parse(ctx.message.yadTransaction.response);
+                        
+                        logInfo('Best model err: ' + bestModel.classifierError);
+                        logInfo('Current model err: ' + taskContext.model.classifierError);
+                        
+                        if(bestModel.classifierError > taskContext.model.classifierError)
+                        {
+                            logInfo('Replacing best model');    
+                            
+                            ctx.commander.issueCommand('YAD_OVEWRITE_FILE', [pathBestModel, false, taskContext.modelStr], function(ctx1){
+                                
+                                if(ctx1.message.yadTransaction && !ctx1.message.yadTransaction.error)
+                                {
+                                    logInfo('Possibly stored as best model');    
+                                }
+                                else
+                                {
+                                    logInfo('Failed to replace best model');
+                                }
+                                
+                                logInfo('All done. Stopped.');
+                            });
+                        }
+                        else
+                        {
+                            logInfo('No need to replace best model. Stopped.');
+                            logInfo('All done. Stopped.');
+                        }
+                    }
+                    else
+                    {
+                        logInfo('All done. Stopped.');    
+                    }
+                });
+            }
+            else
+            {
+                // store this model, it is good enough to be first best
+                
+                context.commander.issueCommand('YAD_WRITE_FILE', [pathBest + '/best-' + taskContext.structureParameters.bestToken + '.json', false, taskContext.modelStr], function(ctx){
+                    
+                    if(ctx.message.yadTransaction && !ctx.message.yadTransaction.error)
+                    {
+                        logInfo('Possibly stored as best model');
+                    }
+                    
+                    logInfo('All done. Stopped.');
+                });
+            }
+        }
+    });
+}
+//-----------------------------------------------------------------------------
 function onWorkerMessage(e)
 {
     var arg = e.data;
@@ -1700,21 +1771,42 @@ function onWorkerMessage(e)
         
         this.model.targetToken = this.structureParameters.targetToken;
         
-        var modelStr = JSON.stringify(this.model);
+        this.modelStr = JSON.stringify(this.model);
+        var modelName = generateUniqueKey() + '.json';
         
-        var path = 'models/' + this.structureParameters.targetToken + '/' + generateUniqueKey() + '.json';
+        var path = 'models/' + this.structureParameters.targetToken + '/' + modelName;
         
-        this.commander.issueCommand('YAD_WRITE_FILE', [path, false, modelStr], function(ctx){
+        this.commander.issueCommand('YAD_WRITE_FILE', [path, false, this.modelStr], function(ctx){
             
             if(ctx.message.yadTransaction && !ctx.message.yadTransaction.error)
             {
                 logInfo('Possibly stored: ' + path);
             }
             
-            logInfo('All done. Stopped');
+            if(this.model.classifierError < this.structureParameters.goodThreshold)
+            {
+                var pathGood = 'good/' + this.structureParameters.goodToken + '/' + modelName;
             
-            // to do: reload page and work again
-        });
+                this.commander.issueCommand('YAD_WRITE_FILE', [pathGood, false, this.modelStr], function(ctx1){
+
+                    if(ctx1.message.yadTransaction && !ctx1.message.yadTransaction.error)
+                    {
+                        logInfo('Possibly stored to good models: ' + pathGood);
+                        
+                        checkBest(this);        
+                    }
+                    else
+                    {
+                        logInfo('Failed to store to good models. Stopped.')
+                    }
+                }.bind(this));
+            }
+            else
+            {
+                logInfo('All done. Stopped.');
+            }
+            
+        }.bind(this));
     }
 }
 //-----------------------------------------------------------------------------
@@ -1725,15 +1817,18 @@ function main(commander)
         
     var parametersBlock = 
     {
-        trainToken : 'mean_train',       // data/<trainToken>
-        testToken : 'mean_test',         // data/<testToken>
-        targetToken: 'mean_ar',             // models/<targetToken>
+        trainToken : 'int_train',       // data/<trainToken>
+        testToken : 'int_test',         // data/<testToken>
+        targetToken: 'int_ar-debug',          // models/<targetToken>
+        goodToken: 'int_debug',               // good/<goodToken>
+        bestToken: 'int_debug',               // best/<bestToken>
+        goodThreshold: 0.22,
         initRandom: false,
         clusterizationRadius : 2.2,
-        qFactor : 4.4,
+        qFactor : 4,
         yAmplitude : 2,
         ySeparator : 0,
-        //anfisRulesCount: 10,
+        anfisRulesCount: 5,
         lbfgsHistorySize: 10,
         lbfgsLinearSearchStepsCount: 20,
         lbfgsSteps: 1000
